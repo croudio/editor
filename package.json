@@ -1,4 +1,10 @@
 {
+  "name": "@croudio/editor",
+  "author": "Boy Hagemann",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "version": "0.0.2",
+  "private": false,
   "devDependencies": {
     "@types/react": "^16.9.51",
     "@types/react-dom": "^16.9.8",
@@ -13,8 +19,5 @@
   },
   "scripts": {
     "build": "npx rollup -c"
-  },
-  "main": "dist/index.js",
-  "module": "dist/index.esm.js",
-  "version": "0.0.0"
+  }
 }
