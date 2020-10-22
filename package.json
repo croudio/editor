@@ -4,7 +4,7 @@
   "main": "./dist/index.js",
   "types": "./dist/main.d.ts",
   "module": "./dist/index.esm.js",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "private": false,
   "devDependencies": {
     "@types/react": "^16.9.51",
