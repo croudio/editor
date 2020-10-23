@@ -1,4 +1,5 @@
 import typescript from "rollup-plugin-typescript2";
+import resolve from "rollup-plugin-node-resolve";
 import pkg from "./package.json";
 
 const extensions = [".js", ".jsx", ".ts", ".tsx"];
@@ -10,8 +11,12 @@ const external = [
 ];
 
 const plugins = [
+    // resolve({
+    //     browser: true
+    // }),
     typescript({
         typescript: require("typescript"),
+        // clean: true
     }),
 ];
 

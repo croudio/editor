@@ -1,6 +1,5 @@
-import React from 'react'
-import Editor from './components/Editor'
+import Editor, { Props as EditorProps } from './components/Editor'
 
 export {
-    Editor
+    Editor, EditorProps
 }
