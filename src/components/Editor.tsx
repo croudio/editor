@@ -1,5 +1,5 @@
 import React, { FC, ReactElement, useReducer } from 'react'
-import { Size, ChangeEvent, Element, Locator, Change } from '../typings'
+import { ChangeEvent, Element, Locator } from '../typings'
 import useEditor, { RenderElementProps, Settings, KeyHandler } from '../hooks/useEditor'
 import EditorUI from '../ui/Editor'
 import UIElement from '../ui/Element';
@@ -9,7 +9,7 @@ import { ThemeProvider } from 'styled-components'
 import defaultTheme from '../themes/default'
 import elementReducer from '../reducers/elements'
 
-export interface Props extends Partial<Settings>, Partial<Size> {
+export interface Props extends Partial<Settings> {
     id?: string,
     elements?: Element[],
     locators?: Locator[],
@@ -20,11 +20,22 @@ export interface Props extends Partial<Settings>, Partial<Size> {
     keys?: Record<string, KeyHandler>
 }
 
-const Editor: FC<Props> = (props) => {
+const Editor: FC<Props> = ({ elements: defaultElements, ...props }) => {
 
-    const [elements, dispatch] = useReducer(elementReducer, props.elements || []);
+    // Elements
+    const [elements, dispatch] = useReducer(elementReducer, defaultElements || []);
 
-    const defaults = {
+    // Dispatch element updates on change.
+    const onChange = (events: ChangeEvent[]) => {
+        events.forEach(dispatch)
+
+        props.onChange && props.onChange(events);
+    }
+
+    // Merge the defaults with the props and local state
+    const merged = {
+
+        // Defaults
         id: "editor",
         locators: [],
         generateId: uuid,
@@ -33,21 +44,23 @@ const Editor: FC<Props> = (props) => {
         grid: { width: 100, height: 100 },
         quantize: { width: 5, height: 5 },
         snapToGrid: true,
-        onChange: (events: ChangeEvent[]) => {
-            events.forEach(dispatch)
-        },
-        keys: {}
-    }
+        keys: {},
 
-    // Merge the defaults with the props and local state
-    const merged = { ...defaults, ...props, elements };
+        // Override with custom props
+        ...props,
 
-    const editorProps = useEditor(merged);
+        // Override with local state and handlers
+        elements,
+        onChange
+    };
+
+    // Build the editor props
+    const editorProps = { ...merged, ...useEditor(merged) }
 
     return (
         <ThemeProvider theme={defaultTheme}>
-            <Canvas {...merged.size}>
-                <EditorUI {...merged} {...editorProps} />
+            <Canvas {...editorProps.size}>
+                <EditorUI {...editorProps} />
             </Canvas>
         </ThemeProvider>
     )
