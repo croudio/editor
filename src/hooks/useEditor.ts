@@ -10,7 +10,6 @@ import { v4 as uuid } from 'uuid';
 
 
 export interface Settings {
-    dimensions: Size,
     grid: Size,
     quantize: Size,
     offset: Position,
@@ -58,7 +57,6 @@ interface WithEditor extends Settings {
 interface Props {
     elements: Element[],
     renderElement: (props: RenderElementProps) => ReactElement
-    dimensions: Size,
     grid: Size,
     quantize: Size,
     snapToGrid: boolean,
@@ -67,7 +65,7 @@ interface Props {
     keys?: Record<string, KeyHandler>
 }
 
-export default ({ elements, renderElement, dimensions, grid, quantize, snapToGrid, onChange, generateId: customGenerateId, keys }: Props): WithEditor => {
+export default ({ elements, renderElement, grid, quantize, snapToGrid, onChange, generateId: customGenerateId, keys }: Props): WithEditor => {
 
     const generateId = customGenerateId || uuid;
 
@@ -224,7 +222,6 @@ export default ({ elements, renderElement, dimensions, grid, quantize, snapToGri
 
     const helpers: WithEditor = {
         grid,
-        dimensions,
         quantize,
         snapToGrid,
         changes,

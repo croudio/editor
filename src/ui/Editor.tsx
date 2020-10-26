@@ -5,9 +5,11 @@ import Selection from './Selection'
 import Overlay from './Overlay'
 import LocatorUI from './Locator'
 
+type HandleElement = (position: Position) => void
 
-interface Props extends Size {
+interface Props {
     id: string,
+    size: Size,
     grid: Size,
     quantize: Size,
     zoom: Position,
@@ -16,20 +18,19 @@ interface Props extends Size {
     blocks: ReactElement[]
     bounds?: Bounds,
     tool: Tool,
-    onDown?: (position: Position) => void,
-    onUp?: (position: Position) => void,
-    onMove?: (offset: Position) => void,
+    onDown?: HandleElement,
+    onUp?: HandleElement,
+    onMove?: HandleElement,
 }
 
-const Editor: FC<Props> = ({ id, width, height, grid, quantize, zoom, offset, locators, blocks, bounds, tool, onDown, onUp, onMove }) => {
+const Editor: FC<Props> = ({ id, size, grid, quantize, zoom, offset, locators, blocks, bounds, tool, onDown, onUp, onMove }) => {
 
     return (
         <g>
             <Grid
+                {...size}
                 id={`${id}-small`}
                 color="lightGrey"
-                width={width}
-                height={height}
                 grid={{
                     width: zoom.x * grid.width / quantize.width,
                     height: zoom.y * grid.height / quantize.height
@@ -37,10 +38,9 @@ const Editor: FC<Props> = ({ id, width, height, grid, quantize, zoom, offset, lo
                 offset={offset}
             />
             <Grid
+                {...size}
                 id={`${id}-large`}
                 color="grey"
-                width={width}
-                height={height}
                 grid={{
                     width: zoom.x * grid.width,
                     height: zoom.y * grid.height
@@ -53,8 +53,7 @@ const Editor: FC<Props> = ({ id, width, height, grid, quantize, zoom, offset, lo
             {blocks}
             {bounds && <Selection {...bounds} />}
             <Overlay
-                width={width}
-                height={height}
+                {...size}
                 tool={tool}
                 onDown={onDown}
                 onUp={onUp}

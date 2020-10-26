@@ -1,7 +1,6 @@
 import { ReactElement } from "react";
 import { Position, Bounds, ChangeEvent, Element, Selection, Tool, Mode, Size } from "../typings";
 export interface Settings {
-    dimensions: Size;
     grid: Size;
     quantize: Size;
     offset: Position;
@@ -43,7 +42,6 @@ interface WithEditor extends Settings {
 interface Props {
     elements: Element[];
     renderElement: (props: RenderElementProps) => ReactElement;
-    dimensions: Size;
     grid: Size;
     quantize: Size;
     snapToGrid: boolean;
@@ -51,5 +49,5 @@ interface Props {
     onChange: (changes: ChangeEvent[]) => void;
     keys?: Record<string, KeyHandler>;
 }
-declare const _default: ({ elements, renderElement, dimensions, grid, quantize, snapToGrid, onChange, generateId: customGenerateId, keys }: Props) => WithEditor;
+declare const _default: ({ elements, renderElement, grid, quantize, snapToGrid, onChange, generateId: customGenerateId, keys }: Props) => WithEditor;
 export default _default;

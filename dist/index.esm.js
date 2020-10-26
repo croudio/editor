@@ -8,33 +8,6 @@ import styled, { ThemeProvider } from 'styled-components';
 import { themeGet } from '@styled-system/theme-get';
 import Color from 'color';
 
-/*! *****************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-
-function __rest(s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-}
-
 var Tool;
 (function (Tool) {
     Tool["Pointer"] = "pointer";
@@ -89,7 +62,7 @@ const isInBounds = (bounds) => (subject) => {
 const snapTo = (value, snap) => Math.round(value / snap) * snap;
 const floorTo = (value, snap) => Math.floor(value / snap) * snap;
 
-var useEditor = ({ elements, renderElement, dimensions, grid, quantize, snapToGrid, onChange, generateId: customGenerateId, keys }) => {
+var useEditor = ({ elements, renderElement, grid, quantize, snapToGrid, onChange, generateId: customGenerateId, keys }) => {
     const generateId = customGenerateId || v4;
     const [selection, select] = useState([]);
     const [zoom, setZoom] = useState({ x: 1, y: 1 });
@@ -187,7 +160,6 @@ var useEditor = ({ elements, renderElement, dimensions, grid, quantize, snapToGr
     const blocks = elementsWithChanges.map(element => renderElement(Object.assign(Object.assign({}, element), { x: element.x * zoom.x + offset.x, y: element.y * zoom.y + offset.y, width: element.width * zoom.x, height: element.height * zoom.y, selected: isSelected(element), moving: isChanged(element) })));
     const helpers = {
         grid,
-        dimensions,
         quantize,
         snapToGrid,
         changes,
@@ -544,20 +516,20 @@ const Locator = ({ x, active }) => {
     return React.createElement(Line, { x1: x, x2: x, y1: 0, y2: "100%", active: active });
 };
 
-const Editor = ({ id, width, height, grid, quantize, zoom, offset, locators, blocks, bounds, tool, onDown, onUp, onMove }) => {
+const Editor = ({ id, size, grid, quantize, zoom, offset, locators, blocks, bounds, tool, onDown, onUp, onMove }) => {
     return (React.createElement("g", null,
-        React.createElement(Grid$1, { id: `${id}-small`, color: "lightGrey", width: width, height: height, grid: {
+        React.createElement(Grid$1, Object.assign({}, size, { id: `${id}-small`, color: "lightGrey", grid: {
                 width: zoom.x * grid.width / quantize.width,
                 height: zoom.y * grid.height / quantize.height
-            }, offset: offset }),
-        React.createElement(Grid$1, { id: `${id}-large`, color: "grey", width: width, height: height, grid: {
+            }, offset: offset })),
+        React.createElement(Grid$1, Object.assign({}, size, { id: `${id}-large`, color: "grey", grid: {
                 width: zoom.x * grid.width,
                 height: zoom.y * grid.height
-            }, offset: offset }),
+            }, offset: offset })),
         locators.map(locator => (React.createElement(Locator, { key: locator.id, x: locator.time * grid.width / quantize.width, active: locator.id !== "time" }))),
         blocks,
         bounds && React.createElement(Selection$1, Object.assign({}, bounds)),
-        React.createElement(Overlay$1, { width: width, height: height, tool: tool, onDown: onDown, onUp: onUp, onMove: onMove })));
+        React.createElement(Overlay$1, Object.assign({}, size, { tool: tool, onDown: onDown, onUp: onUp, onMove: onMove }))));
 };
 
 const StyledElement = styled.rect `
@@ -583,6 +555,33 @@ var UIElement = memo(Element, (prev, next) => {
         prev.moving === next.moving &&
         prev.active === next.active;
 });
+
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+
+function __rest(s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+}
 
 const Canvas = (_a) => {
     var { width, height, onMove } = _a, rest = __rest(_a, ["width", "height", "onMove"]);
@@ -723,39 +722,30 @@ var defaultTheme = {
     },
 };
 
-var Type;
-(function (Type) {
-    Type["Add"] = "Add";
-    Type["Update"] = "Update";
-    Type["Remove"] = "Remove";
-    Type["Batch"] = "Batch";
-})(Type || (Type = {}));
-const elementReducer = (state, action) => {
+var elementReducer = (state, action) => {
     switch (action.type) {
-        case Type.Add:
+        case Change.Add:
             return [...state, action.element];
-        case Type.Update:
+        case Change.Update:
             return state.map(element => element.id === action.element.id
                 ? Object.assign(Object.assign({}, element), action.element) : element);
-        case Type.Remove:
+        case Change.Remove:
             return state.filter(element => element.id !== action.id);
-        // case Type.Batch:
+        // case Change.Batch:
         //     return action.changes.reduce<Element[]>(elementReducer, state);
         default:
             return state;
     }
 };
-const Editor$1 = (_a) => {
-    var props = __rest(_a, ["width", "height"]);
+
+const Editor$1 = (props) => {
     const [elements, dispatch] = useReducer(elementReducer, props.elements || []);
     const defaults = {
         id: "editor",
         locators: [],
         generateId: v4,
         renderElement: (props) => React.createElement(UIElement, Object.assign({}, props, { key: props.id })),
-        width: 400,
-        height: 300,
-        dimensions: { width: 400, height: 300 },
+        size: { width: 400, height: 300 },
         grid: { width: 100, height: 100 },
         quantize: { width: 5, height: 5 },
         snapToGrid: true,
@@ -764,11 +754,12 @@ const Editor$1 = (_a) => {
         },
         keys: {}
     };
+    // Merge the defaults with the props and local state
     const merged = Object.assign(Object.assign(Object.assign({}, defaults), props), { elements });
-    const withEditorProps = useEditor(merged);
-    return React.createElement(ThemeProvider, { theme: defaultTheme },
-        React.createElement(Canvas, { width: merged.width, height: merged.height },
-            React.createElement(Editor, Object.assign({}, merged, withEditorProps))));
+    const editorProps = useEditor(merged);
+    return (React.createElement(ThemeProvider, { theme: defaultTheme },
+        React.createElement(Canvas, Object.assign({}, merged.size),
+            React.createElement(Editor, Object.assign({}, merged, editorProps)))));
 };
 
 export { Editor$1 as Editor };

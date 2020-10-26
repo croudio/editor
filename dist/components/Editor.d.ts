@@ -1,12 +1,6 @@
 import { FC, ReactElement } from 'react';
 import { Size, ChangeEvent, Element, Locator } from '../typings';
 import { RenderElementProps, Settings, KeyHandler } from '../hooks/useEditor';
-export declare enum Type {
-    Add = "Add",
-    Update = "Update",
-    Remove = "Remove",
-    Batch = "Batch"
-}
 export interface Props extends Partial<Settings>, Partial<Size> {
     id?: string;
     elements?: Element[];

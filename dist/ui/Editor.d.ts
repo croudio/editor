@@ -1,7 +1,9 @@
 import { FC, ReactElement } from 'react';
 import { Size, Position, Locator, Bounds, Tool } from '../typings';
-interface Props extends Size {
+declare type HandleElement = (position: Position) => void;
+interface Props {
     id: string;
+    size: Size;
     grid: Size;
     quantize: Size;
     zoom: Position;
@@ -10,9 +12,9 @@ interface Props extends Size {
     blocks: ReactElement[];
     bounds?: Bounds;
     tool: Tool;
-    onDown?: (position: Position) => void;
-    onUp?: (position: Position) => void;
-    onMove?: (offset: Position) => void;
+    onDown?: HandleElement;
+    onUp?: HandleElement;
+    onMove?: HandleElement;
 }
 declare const Editor: FC<Props>;
 export default Editor;
