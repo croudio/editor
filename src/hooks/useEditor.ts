@@ -1,5 +1,5 @@
 import { useEffect, useState, ReactElement } from "react";
-import { Position, Bounds, ChangeEvent, Target, isAddEvent, Change, Add, Update, Element, ElementEvent, Selection, isElementEvent, Tool, Mode, Size, Remove } from "../typings";
+import { Position, Bounds, ChangeEvent, Target, isAddEvent, Change, Add, Update, Element, ElementEvent, Selection, isElementEvent, Tool, Mode, Size, Remove, Plugin } from "../typings";
 import { calculateBounds, isInBounds, getUpperBounds } from "../utils/selection";
 import { snapTo, floorTo } from "../utils/numbers";
 import uniqBy from 'lodash/fp/uniqBy';
@@ -32,13 +32,17 @@ interface WithEditor extends Settings {
     changes: ChangeEvent[],
     bounds?: Bounds,
     selection: Selection,
+    elements: Element[],
+    generateId: () => string,
+    select: (selection: Selection) => void,
+    onChange: (changes: ChangeEvent[]) => void,
     blocks: ReactElement[]
     tool: Tool,
     mode: Mode,
     selectAll: () => void,
     deselectAll: () => void,
     moveSelection: (transition: Position) => void,
-    duplicateSelection: () => void,
+    // duplicateSelection: () => void,
     deleteSelection: () => void,
     setZoom: (zoom: Position) => void
     resetZoom: () => void
@@ -51,7 +55,7 @@ interface WithEditor extends Settings {
     onDown: (position: Position) => void,
     onUp: (position: Position) => void,
     onMove: (offset: Position) => void,
-    isSelected: (element: Element) => void,
+    isSelected: (element: Element) => boolean,
     isChanged: (element: Element) => void,
 }
 
@@ -65,9 +69,10 @@ export interface Props {
     generateId: () => string,
     onChange: (changes: ChangeEvent[]) => void,
     keys?: Record<string, KeyHandler>
+    plugins?: Plugin[]
 }
 
-export default ({ elements, renderElement, size, grid, quantize, snapToGrid, onChange, generateId: customGenerateId, keys }: Props): WithEditor => {
+export default ({ elements, renderElement, size, grid, quantize, snapToGrid, onChange, generateId: customGenerateId, keys, plugins }: Props): WithEditor => {
 
     const generateId = customGenerateId || uuid;
 
@@ -121,26 +126,26 @@ export default ({ elements, renderElement, size, grid, quantize, snapToGrid, onC
         onChange && onChange(changes)
     }
 
-    const duplicateSelection = () => {
+    // const duplicateSelection = () => {
 
-        const selected = elements
-            .filter(element => selection.includes(element.id));
+    //     const selected = elements
+    //         .filter(element => selection.includes(element.id));
 
-        const bounds = getUpperBounds(selected)
+    //     const bounds = getUpperBounds(selected)
 
-        const changes = selected.map<Add>(element => ({
-            type: Change.Add,
-            element: {
-                ...element,
-                id: generateId(),
-                x: element.x + bounds.width - bounds.x,
-            }
-        }))
+    //     const changes = selected.map<Add>(element => ({
+    //         type: Change.Add,
+    //         element: {
+    //             ...element,
+    //             id: generateId(),
+    //             x: element.x + bounds.width - bounds.x,
+    //         }
+    //     }))
 
-        onChange && onChange(changes);
+    //     onChange && onChange(changes);
 
-        select(changes.map(change => change.element.id))
-    }
+    //     select(changes.map(change => change.element.id))
+    // }
 
     const deleteSelection = () => {
 
@@ -228,6 +233,10 @@ export default ({ elements, renderElement, size, grid, quantize, snapToGrid, onC
         quantize,
         snapToGrid,
         changes,
+        elements,
+        generateId,
+        select,
+        onChange,
         selection,
         bounds,
         zoom,
@@ -238,7 +247,7 @@ export default ({ elements, renderElement, size, grid, quantize, snapToGrid, onC
         selectAll,
         deselectAll,
         moveSelection,
-        duplicateSelection,
+        // duplicateSelection,
         deleteSelection,
         setZoom,
         resetZoom,
@@ -289,7 +298,45 @@ export default ({ elements, renderElement, size, grid, quantize, snapToGrid, onC
             })
         }
 
-    }, [keys, selection, zoom, offset])
+    }, [keys, selection, elements, zoom, offset])
+
+
+    const handlePlugin = (element: Element | undefined) => (plugin: Plugin) => {
+
+        plugin({
+            elements,
+            selection,
+            generateId,
+            select,
+            isSelected,
+            onChange,
+            tool,
+            mode,
+            down,
+            element,
+        })
+    }
+
+    /**
+     * 
+     * Handle plugins
+     * 
+     */
+    useEffect(() => {
+
+        if (!plugins) return;
+
+        // Find the element we are pointing on
+        const element = elements.find(element => isInBounds(element)({ ...pointerPosition, width: 0, height: 0 }))
+
+        // Set the target
+        element
+            ? setTarget(Target.Element)
+            : setTarget(Target.Grid)
+
+        plugins.forEach(handlePlugin(element))
+
+    }, [plugins, down, mode])
 
 
     useEffect(() => {
@@ -303,12 +350,12 @@ export default ({ elements, renderElement, size, grid, quantize, snapToGrid, onC
             : setTarget(Target.Grid)
 
         // Select the single element if it is not selected yet
-        if (tool === Tool.Pointer && down && element && !isSelected(element)) {
-            console.log("select pointer 1")
-            mode === Mode.Special
-                ? select([...selection, element.id])
-                : select([element.id])
-        }
+        // if (tool === Tool.Pointer && down && element && !isSelected(element)) {
+        //     console.log("select pointer 1")
+        //     mode === Mode.Special
+        //         ? select([...selection, element.id])
+        //         : select([element.id])
+        // }
 
         // Select again, if we already have a selection but did not move it.
         if (tool === Tool.Pointer && !down && element && !pointerOffset && mode === Mode.Special) {

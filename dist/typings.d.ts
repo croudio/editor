@@ -64,4 +64,20 @@ export declare const isUpdateEvent: (change: AnyAction) => change is Update;
 export declare const isRemoveEvent: (change: AnyAction) => change is Remove;
 export declare const isElementEvent: (change: AnyAction) => change is ElementEvent;
 export declare const isEditorEvent: (change: AnyAction) => change is Select;
+export interface HelperProps {
+    elements: Element[];
+    selection: Selection;
+    generateId: () => string;
+    select: (selection: Selection) => void;
+    isSelected: (element: Element) => boolean;
+    onChange: (changes: ChangeEvent[]) => void;
+}
+export declare type Helper = (props: HelperProps) => void;
+export interface PluginProps extends HelperProps {
+    tool: Tool;
+    mode: Mode;
+    down: boolean;
+    element: Element | undefined;
+}
+export declare type Plugin = (props: PluginProps) => void;
 export {};

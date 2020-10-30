@@ -83,3 +83,23 @@ export const isRemoveEvent = (change: AnyAction): change is Remove => change.typ
 
 export const isElementEvent = (change: AnyAction): change is ElementEvent => [Change.Add, Change.Update, Change.Remove].includes(change.type)
 export const isEditorEvent = (change: AnyAction): change is EditorEvent => [Change.Select].includes(change.type)
+
+export interface HelperProps {
+    elements: Element[],
+    selection: Selection,
+    generateId: () => string,
+    select: (selection: Selection) => void,
+    isSelected: (element: Element) => boolean,
+    onChange: (changes: ChangeEvent[]) => void
+}
+
+export type Helper = (props: HelperProps) => void
+
+export interface PluginProps extends HelperProps {
+    tool: Tool,
+    mode: Mode,
+    down: boolean,
+    element: Element | undefined,
+}
+
+export type Plugin = (props: PluginProps) => void

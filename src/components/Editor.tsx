@@ -1,5 +1,5 @@
 import React, { FC, ReactElement, useReducer } from 'react'
-import { ChangeEvent, Element, Locator } from '../typings'
+import { ChangeEvent, Element, Locator, Plugin } from '../typings'
 import useEditor, { RenderElementProps, Settings, KeyHandler } from '../hooks/useEditor'
 import EditorUI from '../ui/Editor'
 import UIElement from '../ui/Element';
@@ -17,7 +17,8 @@ export interface Props extends Partial<Settings> {
     onSelect?: (elements: Element[]) => void;
     onChange?: (events: ChangeEvent[]) => void;
     generateId?: () => string,
-    keys?: Record<string, KeyHandler>
+    keys?: Record<string, KeyHandler>,
+    plugins?: Plugin[]
 }
 
 const Editor: FC<Props> = ({ elements: defaultElements, ...props }) => {
@@ -27,6 +28,8 @@ const Editor: FC<Props> = ({ elements: defaultElements, ...props }) => {
 
     // Dispatch element updates on change.
     const onChange = (events: ChangeEvent[]) => {
+
+        console.log("hanleoNChange", events)
         events.forEach(dispatch)
 
         props.onChange && props.onChange(events);

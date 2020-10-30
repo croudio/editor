@@ -1,7 +1,7 @@
 import { FC, ReactElement } from 'react';
-import { Size, ChangeEvent, Element, Locator } from '../typings';
+import { ChangeEvent, Element, Locator, Plugin } from '../typings';
 import { RenderElementProps, Settings, KeyHandler } from '../hooks/useEditor';
-export interface Props extends Partial<Settings>, Partial<Size> {
+export interface Props extends Partial<Settings> {
     id?: string;
     elements?: Element[];
     locators?: Locator[];
@@ -10,6 +10,7 @@ export interface Props extends Partial<Settings>, Partial<Size> {
     onChange?: (events: ChangeEvent[]) => void;
     generateId?: () => string;
     keys?: Record<string, KeyHandler>;
+    plugins?: Plugin[];
 }
 declare const Editor: FC<Props>;
 export default Editor;

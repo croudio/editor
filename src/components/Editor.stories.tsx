@@ -3,6 +3,9 @@ import React from 'react';
 import { Story, Meta } from '@storybook/react/types-6-0';
 
 import Editor, { Props as EditorProps } from './Editor';
+import { duplicateSelection } from '../helpers/index';
+import { selectElement } from '../plugins/index';
+import { Plugin } from '../typings'
 
 export default {
   title: 'Editor',
@@ -21,4 +24,13 @@ Default.args = {
   size: { width: 300, height: 250 },
   grid: { width: 100, height: 50 },
   quantize: { width: 4, height: 2 }
+};
+
+export const WithPlugins = Template.bind({});
+WithPlugins.args = {
+  elements: [{ id: "Test", width: 100, height: 25, x: 25, y: 50 }],
+  plugins: [selectElement],
+  keys: {
+    "command+d": duplicateSelection
+  }
 };

@@ -22,6 +22,33 @@ var keyboardJS__default = /*#__PURE__*/_interopDefaultLegacy(keyboardJS);
 var styled__default = /*#__PURE__*/_interopDefaultLegacy(styled);
 var Color__default = /*#__PURE__*/_interopDefaultLegacy(Color);
 
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+
+function __rest(s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+}
+
 var Tool;
 (function (Tool) {
     Tool["Pointer"] = "pointer";
@@ -76,7 +103,7 @@ const isInBounds = (bounds) => (subject) => {
 const snapTo = (value, snap) => Math.round(value / snap) * snap;
 const floorTo = (value, snap) => Math.floor(value / snap) * snap;
 
-var useEditor = ({ elements, renderElement, grid, quantize, snapToGrid, onChange, generateId: customGenerateId, keys }) => {
+var useEditor = ({ elements, renderElement, size, grid, quantize, snapToGrid, onChange, generateId: customGenerateId, keys, plugins }) => {
     const generateId = customGenerateId || uuid.v4;
     const [selection, select] = React.useState([]);
     const [zoom, setZoom] = React.useState({ x: 1, y: 1 });
@@ -111,17 +138,21 @@ var useEditor = ({ elements, renderElement, grid, quantize, snapToGrid, onChange
         }));
         onChange && onChange(changes);
     };
-    const duplicateSelection = () => {
-        const selected = elements
-            .filter(element => selection.includes(element.id));
-        const bounds = getUpperBounds(selected);
-        const changes = selected.map(element => ({
-            type: Change.Add,
-            element: Object.assign(Object.assign({}, element), { id: generateId(), x: element.x + bounds.width - bounds.x })
-        }));
-        onChange && onChange(changes);
-        select(changes.map(change => change.element.id));
-    };
+    // const duplicateSelection = () => {
+    //     const selected = elements
+    //         .filter(element => selection.includes(element.id));
+    //     const bounds = getUpperBounds(selected)
+    //     const changes = selected.map<Add>(element => ({
+    //         type: Change.Add,
+    //         element: {
+    //             ...element,
+    //             id: generateId(),
+    //             x: element.x + bounds.width - bounds.x,
+    //         }
+    //     }))
+    //     onChange && onChange(changes);
+    //     select(changes.map(change => change.element.id))
+    // }
     const deleteSelection = () => {
         const changes = elements
             .filter(element => selection.includes(element.id))
@@ -173,10 +204,15 @@ var useEditor = ({ elements, renderElement, grid, quantize, snapToGrid, onChange
     ]);
     const blocks = elementsWithChanges.map(element => renderElement(Object.assign(Object.assign({}, element), { x: element.x * zoom.x + offset.x, y: element.y * zoom.y + offset.y, width: element.width * zoom.x, height: element.height * zoom.y, selected: isSelected(element), moving: isChanged(element) })));
     const helpers = {
+        size,
         grid,
         quantize,
         snapToGrid,
         changes,
+        elements,
+        generateId,
+        select,
+        onChange,
         selection,
         bounds,
         zoom,
@@ -187,7 +223,7 @@ var useEditor = ({ elements, renderElement, grid, quantize, snapToGrid, onChange
         selectAll,
         deselectAll,
         moveSelection,
-        duplicateSelection,
+        // duplicateSelection,
         deleteSelection,
         setZoom,
         resetZoom,
@@ -229,7 +265,37 @@ var useEditor = ({ elements, renderElement, grid, quantize, snapToGrid, onChange
                 keyboardJS__default['default'].unbind(key);
             });
         };
-    }, [keys, selection, zoom, offset]);
+    }, [keys, selection, elements, zoom, offset]);
+    const handlePlugin = (element) => (plugin) => {
+        plugin({
+            elements,
+            selection,
+            generateId,
+            select,
+            isSelected,
+            onChange,
+            tool,
+            mode,
+            down,
+            element,
+        });
+    };
+    /**
+     *
+     * Handle plugins
+     *
+     */
+    React.useEffect(() => {
+        if (!plugins)
+            return;
+        // Find the element we are pointing on
+        const element = elements.find(element => isInBounds(element)(Object.assign(Object.assign({}, pointerPosition), { width: 0, height: 0 })));
+        // Set the target
+        element
+            ? setTarget(Target.Element)
+            : setTarget(Target.Grid);
+        plugins.forEach(handlePlugin(element));
+    }, [plugins, down, mode]);
     React.useEffect(() => {
         // Find the element we are pointing on
         const element = elements.find(element => isInBounds(element)(Object.assign(Object.assign({}, pointerPosition), { width: 0, height: 0 })));
@@ -238,12 +304,12 @@ var useEditor = ({ elements, renderElement, grid, quantize, snapToGrid, onChange
             ? setTarget(Target.Element)
             : setTarget(Target.Grid);
         // Select the single element if it is not selected yet
-        if (tool === Tool.Pointer && down && element && !isSelected(element)) {
-            console.log("select pointer 1");
-            mode === Mode.Special
-                ? select([...selection, element.id])
-                : select([element.id]);
-        }
+        // if (tool === Tool.Pointer && down && element && !isSelected(element)) {
+        //     console.log("select pointer 1")
+        //     mode === Mode.Special
+        //         ? select([...selection, element.id])
+        //         : select([element.id])
+        // }
         // Select again, if we already have a selection but did not move it.
         if (tool === Tool.Pointer && !down && element && !pointerOffset && mode === Mode.Special) {
             console.log("select pointer 2");
@@ -570,33 +636,6 @@ var UIElement = React.memo(Element, (prev, next) => {
         prev.active === next.active;
 });
 
-/*! *****************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-
-function __rest(s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-}
-
 const Canvas = (_a) => {
     var { width, height, onMove } = _a, rest = __rest(_a, ["width", "height", "onMove"]);
     const [isDown, setDown] = React.useState(false);
@@ -752,29 +791,54 @@ var elementReducer = (state, action) => {
     }
 };
 
-const Editor$1 = (props) => {
-    const [elements, dispatch] = React.useReducer(elementReducer, props.elements || []);
-    const defaults = {
-        id: "editor",
-        locators: [],
-        generateId: uuid.v4,
-        renderElement: (props) => React__default['default'].createElement(UIElement, Object.assign({}, props, { key: props.id })),
-        size: { width: 400, height: 300 },
-        grid: { width: 100, height: 100 },
-        quantize: { width: 5, height: 5 },
-        snapToGrid: true,
-        onChange: (events) => {
-            events.forEach(dispatch);
-        },
-        keys: {}
+const Editor$1 = (_a) => {
+    var { elements: defaultElements } = _a, props = __rest(_a, ["elements"]);
+    // Elements
+    const [elements, dispatch] = React.useReducer(elementReducer, defaultElements || []);
+    // Dispatch element updates on change.
+    const onChange = (events) => {
+        console.log("hanleoNChange", events);
+        events.forEach(dispatch);
+        props.onChange && props.onChange(events);
     };
     // Merge the defaults with the props and local state
-    const merged = Object.assign(Object.assign(Object.assign({}, defaults), props), { elements });
-    const editorProps = useEditor(merged);
+    const merged = Object.assign(Object.assign({ 
+        // Defaults
+        id: "editor", locators: [], generateId: uuid.v4, renderElement: (props) => React__default['default'].createElement(UIElement, Object.assign({}, props, { key: props.id })), size: { width: 400, height: 300 }, grid: { width: 100, height: 100 }, quantize: { width: 5, height: 5 }, snapToGrid: true, keys: {} }, props), { 
+        // Override with local state and handlers
+        elements,
+        onChange });
+    // Build the editor props
+    const editorProps = Object.assign(Object.assign({}, merged), useEditor(merged));
     return (React__default['default'].createElement(styled.ThemeProvider, { theme: defaultTheme },
-        React__default['default'].createElement(Canvas, Object.assign({}, merged.size),
-            React__default['default'].createElement(Editor, Object.assign({}, merged, editorProps)))));
+        React__default['default'].createElement(Canvas, Object.assign({}, editorProps.size),
+            React__default['default'].createElement(Editor, Object.assign({}, editorProps)))));
+};
+
+const DuplicateSelection = ({ elements, selection, generateId, select, onChange }) => {
+    console.log("helper: duplicate");
+    const selected = elements
+        .filter(element => selection.includes(element.id));
+    const bounds = getUpperBounds(selected);
+    const changes = selected.map(element => ({
+        type: Change.Add,
+        element: Object.assign(Object.assign({}, element), { id: generateId(), x: element.x + bounds.width - bounds.x })
+    }));
+    onChange && onChange(changes);
+    select(changes.map(change => change.element.id));
+};
+
+const selectElement = ({ tool, mode, down, element, selection, isSelected, select }) => {
+    // Select the single element if it is not selected yet
+    if (tool === Tool.Pointer && down && element && !isSelected(element)) {
+        console.log("plugin: select element");
+        mode === Mode.Special
+            ? select([...selection, element.id])
+            : select([element.id]);
+    }
 };
 
 exports.Editor = Editor$1;
+exports.duplicateSelection = DuplicateSelection;
+exports.selectElement = selectElement;
 //# sourceMappingURL=index.js.map
