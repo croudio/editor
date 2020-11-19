@@ -3,9 +3,9 @@ import React from 'react';
 import { Story, Meta } from '@storybook/react/types-6-0';
 
 import Editor, { Props as EditorProps } from './Editor';
-import { duplicateSelection } from '../helpers/index';
-import { selectElement } from '../plugins/index';
-import { Plugin } from '../typings'
+import { duplicateSelection, moveSelection, deleteSelection, clearSelection, selectAll, setMode } from '../helpers/index';
+import { onPointingCanvas, dragSelection, selectElement, onKeyDown, onKeyUp, moveSelectionWithCursorKeys } from '../plugins/index';
+import { Mode } from '../typings';
 
 export default {
   title: 'Editor',
@@ -29,8 +29,18 @@ Default.args = {
 export const WithPlugins = Template.bind({});
 WithPlugins.args = {
   elements: [{ id: "Test", width: 100, height: 25, x: 25, y: 50 }],
-  plugins: [selectElement],
-  keys: {
-    "command+d": duplicateSelection
-  }
+  grid: { width: 100, height: 50 },
+  quantize: { width: 4, height: 2 },
+  plugins: [
+    selectElement,
+    onPointingCanvas(clearSelection),
+    onKeyDown("command+d")(duplicateSelection),
+    moveSelectionWithCursorKeys({ special: "shift" }),
+    onKeyDown("backspace")(deleteSelection),
+    onKeyDown("command+a")(selectAll),
+    onKeyDown("esc")(clearSelection),
+    onKeyDown("shift")(setMode(Mode.Special)),
+    onKeyUp("shift")(setMode(Mode.Default)),
+    dragSelection
+  ]
 };

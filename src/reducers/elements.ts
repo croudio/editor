@@ -1,9 +1,11 @@
 import { Change, Element } from "../typings"
 
-
-export default (state: Element[], action: any) => {
+export default (state: Element[], action: any): Element[] => {
 
     switch (action.type) {
+
+        case Change.Set:
+            return action.elements
 
         case Change.Add:
             return [...state, action.element]
@@ -15,7 +17,7 @@ export default (state: Element[], action: any) => {
             )
 
         case Change.Remove:
-            return state.filter(element => element.id !== action.id)
+            return state.filter(element => element.id !== action.element.id)
 
         // case Change.Batch:
         //     return action.changes.reduce<Element[]>(elementReducer, state);

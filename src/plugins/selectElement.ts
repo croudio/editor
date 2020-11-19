@@ -1,14 +1,14 @@
 import { Mode, Plugin, Tool } from "../typings"
 
 
-const selectElement: Plugin = ({ tool, mode, down, element, selection, isSelected, select }) => {
+const selectElement: Plugin = ({ mode, down, pointerElement, selection, isSelected, select }) => {
 
     // Select the single element if it is not selected yet
-    if (tool === Tool.Pointer && down && element && !isSelected(element)) {
+    if (down && pointerElement && !isSelected(pointerElement)) {
         console.log("plugin: select element")
         mode === Mode.Special
-            ? select([...selection, element.id])
-            : select([element.id])
+            ? select([...selection, pointerElement.id])
+            : select([pointerElement.id])
     }
 
 }

@@ -1,7 +1,8 @@
 import Editor, { Props as EditorProps } from './components/Editor'
 
 import {
-    duplicateSelection
+    duplicateSelection,
+    moveSelection
 } from './helpers/index';
 
 import {
@@ -9,5 +10,5 @@ import {
 } from './plugins/index';
 
 export {
-    Editor, EditorProps, duplicateSelection, selectElement
+    Editor, EditorProps, duplicateSelection, moveSelection, selectElement
 }

@@ -1,80 +1,41 @@
-import { useEffect, useState, ReactElement } from "react";
-import { Position, Bounds, ChangeEvent, Target, isAddEvent, Change, Add, Update, Element, ElementEvent, Selection, isElementEvent, Tool, Mode, Size, Remove, Plugin } from "../typings";
-import { calculateBounds, isInBounds, getUpperBounds } from "../utils/selection";
+import { useEffect, useState, ReactElement, useReducer } from "react";
+import { Position, Bounds, ChangeEvent, Callback, Target, isAddEvent, Change, Add, Update, Element, ElementEvent, Selection, isElementEvent, Tool, Mode, Size, Remove, Plugin, Helpers } from "../typings";
+import { calculateBounds, isInBounds } from "../utils/selection";
 import { snapTo, floorTo } from "../utils/numbers";
 import uniqBy from 'lodash/fp/uniqBy';
 import compose from 'lodash/fp/compose';
 import sortBy from 'lodash/fp/sortBy';
-import keyboardJS from 'keyboardjs';
 import { v4 as uuid } from 'uuid';
+import elementReducer from '../reducers/elements'
 
-
-export interface Settings {
-    size: Size,
-    grid: Size,
-    quantize: Size,
-    offset: Position,
-    snapToGrid: boolean,
-    zoom: Position,
-}
 
 export interface RenderElementProps extends Element {
     selected: boolean
     moving: boolean
 }
 
-
-type Callback = (helpers: WithEditor) => void;
-
 export type KeyHandler = Callback | [Callback, Callback]
 
-interface WithEditor extends Settings {
-    changes: ChangeEvent[],
-    bounds?: Bounds,
-    selection: Selection,
-    elements: Element[],
-    generateId: () => string,
-    select: (selection: Selection) => void,
-    onChange: (changes: ChangeEvent[]) => void,
-    blocks: ReactElement[]
-    tool: Tool,
-    mode: Mode,
-    selectAll: () => void,
-    deselectAll: () => void,
-    moveSelection: (transition: Position) => void,
-    // duplicateSelection: () => void,
-    deleteSelection: () => void,
-    setZoom: (zoom: Position) => void
-    resetZoom: () => void
-    multiplyZoom: (transition: Position) => void,
-    setOffset: (offset: Position) => void,
-    resetOffset: () => void,
-    transposeOffset: (transition: Position) => void,
-    setTool: (tool: Tool) => void,
-    setMode: (mode: Mode) => void,
-    onDown: (position: Position) => void,
-    onUp: (position: Position) => void,
-    onMove: (offset: Position) => void,
-    isSelected: (element: Element) => boolean,
-    isChanged: (element: Element) => void,
-}
 
 export interface Props {
-    elements: Element[],
+    elements?: Element[],
     renderElement: (props: RenderElementProps) => ReactElement
     size: Size,
     grid: Size,
     quantize: Size,
     snapToGrid: boolean,
     generateId: () => string,
-    onChange: (changes: ChangeEvent[]) => void,
+    onChange?: (changes: ChangeEvent[]) => void,
     keys?: Record<string, KeyHandler>
     plugins?: Plugin[]
 }
 
-export default ({ elements, renderElement, size, grid, quantize, snapToGrid, onChange, generateId: customGenerateId, keys, plugins }: Props): WithEditor => {
+export default ({ elements: defaultElements, renderElement, size, grid, quantize, snapToGrid, onChange, generateId: customGenerateId, keys, plugins }: Props): Helpers => {
 
     const generateId = customGenerateId || uuid;
+
+    // Elements
+    const [elements, dispatch] = useReducer(elementReducer, []);
 
     const [selection, select] = useState<Selection>([]);
     const [zoom, setZoom] = useState<Position>({ x: 1, y: 1 })
@@ -97,6 +58,19 @@ export default ({ elements, renderElement, size, grid, quantize, snapToGrid, onC
     const [id, setId] = useState<string>(generateId ? generateId() : uuid)
 
 
+    useEffect(() => {
+        console.log("change in useEffect", defaultElements)
+        dispatch({ type: Change.Set, elements: defaultElements })
+    }, [JSON.stringify(defaultElements)])
+
+
+    // Dispatch element updates on change.
+    const flushChanges = (events: ChangeEvent[]) => {
+        events.forEach(dispatch)
+
+        onChange && onChange(events);
+    }
+
     /**
      * Helpers
      */
@@ -106,25 +80,25 @@ export default ({ elements, renderElement, size, grid, quantize, snapToGrid, onC
         .filter(isElementEvent)
         .some(change => change.element.id === element.id);
 
-    const selectAll = () => select(elements.map(element => element.id))
+    // const selectAll = () => select(elements.map(element => element.id))
 
     const deselectAll = () => select([])
 
-    const moveSelection = (transition: Position) => {
+    // const moveSelection = (transition: Position) => {
 
-        const changes = elements
-            .filter(element => selection.includes(element.id))
-            .map<Update>(element => ({
-                type: Change.Update,
-                element: {
-                    ...element,
-                    x: element.x + transition.x,
-                    y: element.y + transition.y
-                }
-            }))
+    //     const changes = elements
+    //         .filter(element => selection.includes(element.id))
+    //         .map<Update>(element => ({
+    //             type: Change.Update,
+    //             element: {
+    //                 ...element,
+    //                 x: element.x + transition.x,
+    //                 y: element.y + transition.y
+    //             }
+    //         }))
 
-        onChange && onChange(changes)
-    }
+    //     onChange && onChange(changes)
+    // }
 
     // const duplicateSelection = () => {
 
@@ -147,14 +121,14 @@ export default ({ elements, renderElement, size, grid, quantize, snapToGrid, onC
     //     select(changes.map(change => change.element.id))
     // }
 
-    const deleteSelection = () => {
+    // const deleteSelection = () => {
 
-        const changes = elements
-            .filter(element => selection.includes(element.id))
-            .map<Remove>(element => ({ type: Change.Remove, element }))
+    //     const changes = elements
+    //         .filter(element => selection.includes(element.id))
+    //         .map<Remove>(element => ({ type: Change.Remove, element }))
 
-        onChange && onChange(changes)
-    }
+    //     onChange && onChange(changes)
+    // }
 
 
     const resetZoom = () => {
@@ -193,10 +167,11 @@ export default ({ elements, renderElement, size, grid, quantize, snapToGrid, onC
         setDown(false);
     }
 
-    const flushChanges = (changes: ChangeEvent[]) => {
-        onChange && changes.length && onChange(changes)
-        setChanges([]);
-    }
+    // const flushChanges = (changes: ChangeEvent[]) => {
+    //     // onChange && changes.length && onChange(changes)
+    //     handleChange(changes)
+    //     setChanges([]);
+    // }
 
 
 
@@ -227,7 +202,8 @@ export default ({ elements, renderElement, size, grid, quantize, snapToGrid, onC
         moving: isChanged(element),
     }))
 
-    const helpers: WithEditor = {
+
+    const helpers: Helpers = {
         size,
         grid,
         quantize,
@@ -236,7 +212,7 @@ export default ({ elements, renderElement, size, grid, quantize, snapToGrid, onC
         elements,
         generateId,
         select,
-        onChange,
+        onChange: flushChanges,
         selection,
         bounds,
         zoom,
@@ -244,11 +220,16 @@ export default ({ elements, renderElement, size, grid, quantize, snapToGrid, onC
         blocks,
         tool,
         mode,
-        selectAll,
+        target,
+        pointerOffset,
+        pointerPosition,
+        down,
+        setChanges,
+        // selectAll,
         deselectAll,
-        moveSelection,
+        // moveSelection,
         // duplicateSelection,
-        deleteSelection,
+        // deleteSelection,
         setZoom,
         resetZoom,
         multiplyZoom,
@@ -264,58 +245,11 @@ export default ({ elements, renderElement, size, grid, quantize, snapToGrid, onC
         isChanged
     }
 
-    /**
-     * Keyboard bindings
-     */
-    useEffect(() => {
-
-        if (!keys) return;
-
-        Object.keys(keys).forEach(key => {
-
-            const handler = keys[key];
-
-            Array.isArray(handler)
-                ? keyboardJS.bind(key, (e) => {
-                    e?.preventDefault()
-                    handler[0](helpers)
-                }, (e) => {
-                    e?.preventDefault()
-                    handler[1](helpers)
-                })
-                : keyboardJS.bind(key, (e) => {
-                    e?.preventDefault()
-                    handler(helpers)
-                })
 
 
-
-        })
-
-        return () => {
-            Object.keys(keys).forEach(key => {
-                keyboardJS.unbind(key)
-            })
-        }
-
-    }, [keys, selection, elements, zoom, offset])
-
-
-    const handlePlugin = (element: Element | undefined) => (plugin: Plugin) => {
-
-        plugin({
-            elements,
-            selection,
-            generateId,
-            select,
-            isSelected,
-            onChange,
-            tool,
-            mode,
-            down,
-            element,
-        })
-    }
+    const handlePlugin = (pointerElement: Element | undefined) => (plugin: Plugin) => plugin({
+        ...helpers, pointerElement
+    })
 
     /**
      * 
@@ -334,9 +268,18 @@ export default ({ elements, renderElement, size, grid, quantize, snapToGrid, onC
             ? setTarget(Target.Element)
             : setTarget(Target.Grid)
 
-        plugins.forEach(handlePlugin(element))
+        const unregisters = plugins.map(handlePlugin(element))
 
-    }, [plugins, down, mode])
+        // Unregister plugins
+        return () => {
+            unregisters.forEach((fn: any) => fn instanceof Function ? fn() : undefined)
+        }
+
+    }, [plugins, down, mode,
+        JSON.stringify(elements),
+        JSON.stringify(selection),
+        // JSON.stringify(changes)
+    ])
 
 
     useEffect(() => {
@@ -358,16 +301,16 @@ export default ({ elements, renderElement, size, grid, quantize, snapToGrid, onC
         // }
 
         // Select again, if we already have a selection but did not move it.
-        if (tool === Tool.Pointer && !down && element && !pointerOffset && mode === Mode.Special) {
-            console.log("select pointer 2")
+        // if (tool === Tool.Pointer && !down && element && !pointerOffset && mode === Mode.Special) {
+        //     console.log("select pointer 2")
 
-            select([...selection, element.id])
-        }
+        //     select([...selection, element.id])
+        // }
 
         // Reset the selection if clicked outside and not moved
-        if (target && tool === Tool.Pointer && !down && mode === Mode.Default && !element && !pointerOffset) {
-            select([])
-        }
+        // if (target && tool === Tool.Pointer && !down && mode === Mode.Default && !element && !pointerOffset) {
+        //     select([])
+        // }
 
         // CHange the selection to the new elements, if there are clones.
         if (!down && changes.some(change => change.type === Change.Add)) {
@@ -487,30 +430,30 @@ export default ({ elements, renderElement, size, grid, quantize, snapToGrid, onC
     /**
      * 2. When the target changes
      */
-    useEffect(() => {
+    // useEffect(() => {
 
-        if (!down && tool === Tool.Pointer && target === Target.Grid && pointerOffset) {
+    //     if (!down && tool === Tool.Pointer && target === Target.Grid && pointerOffset) {
 
-            const bounds = calculateBounds(pointerPosition, pointerOffset);
+    //         const bounds = calculateBounds(pointerPosition, pointerOffset);
 
-            const selected = bounds
-                ? elements.filter(isInBounds(bounds)).map(element => element.id)
-                : []
+    //         const selected = bounds
+    //             ? elements.filter(isInBounds(bounds)).map(element => element.id)
+    //             : []
 
-            console.log("select pointer x")
+    //         console.log("select pointer x")
 
-            mode === Mode.Special
-                ? select([...selection, ...selected])
-                : select(selected)
+    //         mode === Mode.Special
+    //             ? select([...selection, ...selected])
+    //             : select(selected)
 
-            // Reset the target, we want to verify a new click on the grid.
-            // Otherwise hitting the shift key only will cause the select.
-            setTarget(undefined)
+    //         // Reset the target, we want to verify a new click on the grid.
+    //         // Otherwise hitting the shift key only will cause the select.
+    //         setTarget(undefined)
 
-        };
+    //     };
 
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [target, down, mode])
+    //     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // }, [target, down, mode])
 
     /**
      * 2. Move the elements by setting elements changes

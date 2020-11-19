@@ -1,13 +1,13 @@
 import React, { FC, ReactElement, useReducer } from 'react'
-import { ChangeEvent, Element, Locator, Plugin } from '../typings'
-import useEditor, { RenderElementProps, Settings, KeyHandler } from '../hooks/useEditor'
+import { ChangeEvent, Element, Locator, Plugin, Settings } from '../typings'
+import useEditor, { RenderElementProps, KeyHandler } from '../hooks/useEditor'
 import EditorUI from '../ui/Editor'
 import UIElement from '../ui/Element';
 import { v4 as uuid } from 'uuid';
 import Canvas from '../ui/Canvas';
 import { ThemeProvider } from 'styled-components'
 import defaultTheme from '../themes/default'
-import elementReducer from '../reducers/elements'
+// import elementReducer from '../reducers/elements'
 
 export interface Props extends Partial<Settings> {
     id?: string,
@@ -21,24 +21,19 @@ export interface Props extends Partial<Settings> {
     plugins?: Plugin[]
 }
 
-const Editor: FC<Props> = ({ elements: defaultElements, ...props }) => {
-
-    // Elements
-    const [elements, dispatch] = useReducer(elementReducer, defaultElements || []);
+const Editor: FC<Props> = (props) => {
 
     // Dispatch element updates on change.
-    const onChange = (events: ChangeEvent[]) => {
+    // const onChange = (events: ChangeEvent[]) => {
 
-        console.log("hanleoNChange", events)
-        events.forEach(dispatch)
+    //     console.log("hanleoNChange", events)
+    //     // events.forEach(dispatch)
 
-        props.onChange && props.onChange(events);
-    }
+    //     props.onChange && props.onChange(events);
+    // }
 
     // Merge the defaults with the props and local state
     const merged = {
-
-        // Defaults
         id: "editor",
         locators: [],
         generateId: uuid,
@@ -48,13 +43,7 @@ const Editor: FC<Props> = ({ elements: defaultElements, ...props }) => {
         quantize: { width: 5, height: 5 },
         snapToGrid: true,
         keys: {},
-
-        // Override with custom props
         ...props,
-
-        // Override with local state and handlers
-        elements,
-        onChange
     };
 
     // Build the editor props
