@@ -1,5 +1,5 @@
 import { useEffect, useState, ReactElement, useReducer } from "react";
-import { Position, Bounds, ChangeEvent, Callback, Target, isAddEvent, Change, Add, Update, Element, ElementEvent, Selection, isElementEvent, Tool, Mode, Size, Remove, Plugin, Helpers } from "../typings";
+import { Position, ChangeEvent, Callback, Target, isAddEvent, Change, Add, Update, Element, ElementEvent, Selection, isElementEvent, Tool, Mode, Size, Remove, Plugin, Helpers } from "../typings";
 import { calculateBounds, isInBounds } from "../utils/selection";
 import { snapTo, floorTo } from "../utils/numbers";
 import uniqBy from 'lodash/fp/uniqBy';

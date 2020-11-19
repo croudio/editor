@@ -1,6 +1,6 @@
 import { FC, ReactElement } from 'react';
-import { ChangeEvent, Element, Locator, Plugin } from '../typings';
-import { RenderElementProps, Settings, KeyHandler } from '../hooks/useEditor';
+import { ChangeEvent, Element, Locator, Plugin, Settings } from '../typings';
+import { RenderElementProps, KeyHandler } from '../hooks/useEditor';
 export interface Props extends Partial<Settings> {
     id?: string;
     elements?: Element[];

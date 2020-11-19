@@ -1,4 +1,4 @@
-import Editor, { Props as EditorProps } from './components/Editor';
-import { duplicateSelection } from './helpers/index';
-import { selectElement } from './plugins/index';
-export { Editor, EditorProps, duplicateSelection, selectElement };
+export { default as Editor, Props as EditorProps } from './components/Editor';
+export * from './typings';
+export * from './helpers/index';
+export * from './plugins/index';

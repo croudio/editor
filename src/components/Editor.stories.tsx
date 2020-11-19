@@ -2,7 +2,7 @@ import React from 'react';
 // also exported from '@storybook/react' if you can deal with breaking changes in 6.1
 import { Story, Meta } from '@storybook/react/types-6-0';
 
-import Editor, { Props as EditorProps } from './Editor';
+import { Editor, EditorProps } from '../index';
 import { duplicateSelection, moveSelection, deleteSelection, clearSelection, selectAll, setMode } from '../helpers/index';
 import { onPointingCanvas, dragSelection, selectElement, onKeyDown, onKeyUp, moveSelectionWithCursorKeys } from '../plugins/index';
 import { Mode } from '../typings';
@@ -19,7 +19,10 @@ const Template: Story<EditorProps> = (args: any) => {
 };
 
 export const Default = Template.bind({});
-Default.args = {
+Default.args = {};
+
+export const Basic = Template.bind({});
+Basic.args = {
   elements: [{ id: "Test", width: 100, height: 25, x: 25, y: 50 }],
   size: { width: 300, height: 250 },
   grid: { width: 100, height: 50 },

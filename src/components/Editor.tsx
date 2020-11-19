@@ -35,6 +35,7 @@ const Editor: FC<Props> = (props) => {
     // Merge the defaults with the props and local state
     const merged = {
         id: "editor",
+        elements: [],
         locators: [],
         generateId: uuid,
         renderElement: (props: RenderElementProps) => <UIElement {...props} key={props.id} />,
